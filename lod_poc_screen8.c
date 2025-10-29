@@ -20,11 +20,12 @@
 #include "msx-audio.h"
 #endif
 
-#include "s_vgm_rawdef.h"
 #include "ayfx/ayfx_player.h"
 
 // SFX bank (sound pack)
 #include "content/ayfx/ayfx_bank.h"
+
+#include "lod_poc_screen8_rawdef.h"
 
 // Fonts
 //#include "gfx/vram.h"
@@ -52,7 +53,7 @@
 #define CHAR_OFFY       SCORE_HEIGHT+2
 #define TILE_OFFY       CHAR_OFFY+16
 #define SPLIT_SCORE     (SCORE_HEIGHT-6)
-#define SPLIT_TELA     (SHEIGHT-6)
+#define SPLIT_TELA     (SHEIGHT)
 
 // VGM music entry
 struct MusicEntry
@@ -203,7 +204,7 @@ typedef struct SprAttr{
     u8  y;
     u8  x;
     u8  pattern;
-    u8 unused;
+    u8  unused;
 }SprAttr;
 
 /*typedef struct Movement{
@@ -255,8 +256,8 @@ volatile Character shoots[MAX_SHOOTS];
 
 // The colors for the sprites
 const u8        colors[3][16] ={
-        { 9, 9, 9, 9,14,14,14,14,14,14,14,14, 9, 9, 9, 9},
-        {13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13},
+        {15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15},
+        {14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14},
         {11,10,10,13,13,14,14,14,14,14,14,13,13,10,10,11}
 };
 // Input variables
@@ -291,8 +292,8 @@ const u8  delays[6][3]={{0,0,60}, {1,1,30}, {1,2,25}, {2,2,20}, {3,2,15}, {3,3,1
 
 const struct MusicEntry g_MusicEntry[] =
 {
-	{ "Galious             ", 0xA000 + HONOTORI_LVM_REL , 6}, //HONOTORI_LVM_SEG },
-	{ "Undeadline          ", 0xA000 + UNDEADLINE_LVM_REL  , 7}//UNDEADLINE_LVM_SEG }
+	{ "Penguin Adventure   ", 0xA000 + PENGUIN_LVM_REL , PENGUIN_LVM_SEG}, //HONOTORI_LVM_SEG },
+	{ "Devas               ", 0xA000 + MM_DEVA_08_BIN_REL  , MM_DEVA_08_BIN_SEG}//UNDEADLINE_LVM_SEG }
 };
 
 SoundEntry  sound = { 0, FALSE};
@@ -331,7 +332,7 @@ void VDP_HBlankHandler()
             swapSprites=FALSE;
         }
         VDP_RegWrite(5, attributesTableDisplay[framecount%2]);
-        //VDP_RegWrite(11, 0);
+        VDP_RegWrite(11, 0);
         ++framecount;
         hphase=1;
         if(sound.play){
@@ -353,7 +354,7 @@ void VDP_HBlankHandler()
         hphase=2;
         ++dframe;
         ++vblanks;
-        if(dframe>delays[dmode][cdindex]){
+        if(dframe>=delays[dmode][cdindex]){
             g_VBlank = 1;
             dframe=0;
             cdindex=(cdindex+1)%2;
@@ -474,31 +475,23 @@ void main()
 
 	// Initialize VDP
 	VDP_Initialize();
-	VDP_SetMode(VDP_MODE_SCREEN5);
+	VDP_SetMode(VDP_MODE_SCREEN8);
 	VDP_SetColor(0);
 	VDP_ClearVRAM();
 	VDP_SetSpriteFlag(VDP_SPRITE_SIZE_16);
 
     SET_BANK_SEGMENT(3, 3);
-    VDP_SetPalette((const u8*)(0xA000+GFX_PALETTE_BIN_REL));
-    //Mem_Copy(vram1, compressed, vram1_len);
-    ZX0_UnpackToRAM((const u8*)(0xA000+GFX_XAA_ZX0_REL), decompress);
-    VDP_CommandHMMC(decompress,0, CHAR_OFFY, 256, 32);
-    //Mem_Copy(vram2, compressed, vram2_len);
-    ZX0_UnpackToRAM((const u8*)(0xA000+GFX_XAB_ZX0_REL), decompress);
-    VDP_CommandHMMC(decompress,0, CHAR_OFFY+32, 256, 32);
-    //Mem_Copy(vram3, compressed, vram3_len);
-    ZX0_UnpackToRAM((const u8*)(0xA000+GFX_XAC_ZX0_REL), decompress);
-    VDP_CommandHMMC(decompress,0, CHAR_OFFY+64, 256, 16);
+    VDP_CommandHMMC((const u8*)(0xA000),0, CHAR_OFFY, 512, 32);
 
     //VDP_CommandHMMC(vram,0, CHAR_OFFY, 256, 80);
     //VDP_CommandWait();
-    // Sets sprites attriobutes + colors starting at line 240
+    //Sets sprites attriobutes + colors starting at line 240
     VDP_RegWrite(5, attributesTableDisplay[0]);
+
     VDP_RegWrite(11, 0);
 
     // Sets sprites pattern tables at line 240 (111100000000000)
-    VDP_RegWrite(6, 0b00001111);
+    //VDP_RegWrite(6, 0b00011111);
     VDP_EnableSprite(TRUE);
     VDP_LoadSpritePattern(nave,0, 96);
     // Draws the first display buffer based on map(page 1)
@@ -522,7 +515,7 @@ void main()
     // Draw a palette view on page 0
 
     // Load hardware sprites
-/*    DEBUG_PRINT("Sprite attribute table: %X, %X\n", g_SpriteAttributeLow, g_SpriteAttributeHigh);
+/*   DEBUG_PRINT("Sprite attribute table: %X, %X\n", g_SpriteAttributeLow, g_SpriteAttributeHigh);
     DEBUG_PRINT("Sprite pattern table: %X, %X\n",g_SpritePatternLow, g_SpritePatternHigh);
     DEBUG_PRINT("Sprite color table: %X, %X\n", g_SpriteColorLow, g_SpriteColorHigh);
     DEBUG_PRINT("VDP Sprite variable: %X\n", sizeof(g_VDP_Sprite));*/
@@ -831,8 +824,9 @@ void main()
         }
         while(swapSprites){}
         // Writes the sprites RAM copy to the VRAM
-        VDP_WriteVRAM((u8*)tableSprites[0].attributes, spriteAttributeLow[spriteAttributeLowBack], 0, 128);
-        VDP_WriteVRAM((u8*)tableSprites[1].attributes, spriteAttributeLow[spriteAttributeLowBack+1], 0, 128);
+        VDP_WriteVRAM((u8*)&tableSprites[0].attributes, spriteAttributeLow[spriteAttributeLowBack], 0, 128);
+        VDP_WriteVRAM((u8*)&tableSprites[1].attributes, spriteAttributeLow[spriteAttributeLowBack+1], 0, 128);
+
         // Swap the indexes for front and back indexes in spriteAttributeLow (maybe just one index variable is needed)
         spriteAttributeLowTemp=spriteAttributeLowDisplay;
         spriteAttributeLowDisplay=spriteAttributeLowBack;

@@ -2,9 +2,10 @@
 // PROJECT CONFIG OVERWRITE
 //*****************************************************************************
 
-ProjName = "lod_poc";
+ProjName = "lod_poc_screen8";
 
 Target = "ROM_ASCII8";
+
 
 //-- ROM mapper total size in KB (number). Must be a multiple of 8 or 16 depending on the mapper type (from 64 to 4096)
 ROMSize = 128;
@@ -26,10 +27,7 @@ LibModules = ["scc", "msx-audio", "psg", "msx-music", "vgm/lvgm_player", "ayfx/a
 // Segment 7: music 2
 
 RawFiles = [
-	{ segment: 3, file:"gfx/xaa.zx0" },
-	{ segment: 3, file:"gfx/xab.zx0" },
-	{ segment: 3, file:"gfx/xac.zx0" },
-	{ segment: 3, file:"gfx/palette.bin" },
+	{ segment: 3, file:"gfx/vram.sc8" },
 	//{ segment: 5, file:"content/vgm/psg_galious_05.vgm"},
 //  { segment: 6, file:"content/vgm/mm_psycho_03.vgm" },
 	{ segment: 6, file:"content/lvgm/penguin.lvm"},
