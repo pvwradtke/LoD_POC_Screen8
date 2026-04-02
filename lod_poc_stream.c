@@ -7,7 +7,7 @@
 #include "vdp.h"
 #include "memory.h"
 #include "string.h"
-#include "compress/zx0.h"
+#include "compress/lz48.h"
 #include "vgm/lvgm_player.h"
 #include "psg.h"
 #if (VGM_USE_SCC)
@@ -25,7 +25,7 @@
 // SFX bank (sound pack)
 #include "content/ayfx/ayfx_bank.h"
 
-#include "lod_poc_screen8_rawdef.h"
+#include "lod_poc_stream_rawdef.h"
 
 // Fonts
 //#include "gfx/vram.h"
@@ -82,6 +82,14 @@ volatile u8 g_SegLoop;
 volatile u8 g_CurrentMusic = 0;
 volatile u8 isMusicSet=FALSE, isMusicChangeBank=FALSE, isMusicLoop=FALSE;
 volatile u8 soundPlay = FALSE;
+
+volatile u8 stream[256];
+volatile u8* packedStream;
+volatile u8 packedSize;
+volatile u8 packedSegment;
+volatile u8 packedCopy=0;
+volatile u8 packedScrollLine;
+volatile u16 packedVRAMAddress;
 
 const u8 map[1024] =
 {
@@ -280,7 +288,7 @@ u8 row8, prevRow8=0xFF;
 volatile u8 decompress[5120];
 
 // Characters
-i8 numSprites=0, numNoFlick=0, numShoots=0, numSpritesDisplay=0;
+volatile i8 numSprites=0, numNoFlick=0, numShoots=0, numSpritesDisplay=0;
 
 // Controls the frame delay to adjust FPS
 u8  dframe=0;
@@ -339,6 +347,7 @@ void VDP_HBlankHandler()
             ayFX_PlayBank(sound.bank, 0);
             sound.play=FALSE;
         }
+        SET_BANK_SEGMENT(3, g_SegIdx);
         if(isMusicSet)
             LVGM_Stop();
         LVGM_Decode();
@@ -346,10 +355,11 @@ void VDP_HBlankHandler()
         ayFX_Update();
         PSG_Apply();
         if(isMusicSet){
-            SET_BANK_SEGMENT(3, g_MusicEntry[g_CurrentMusic].Segment);
+            //SET_BANK_SEGMENT(3, g_SegIdx);
             LVGM_Play((const void*)0xA000, TRUE);
             isMusicSet=FALSE;
         }
+        SET_BANK_SEGMENT(3, packedSegment);
     }else if(hphase==1){
         hphase=2;
         ++vblanks;
@@ -494,9 +504,9 @@ void main()
     //VDP_RegWrite(6, 0b00011111);
     VDP_EnableSprite(TRUE);
     VDP_LoadSpritePattern(nave,0, 96);
-    // Draws the first display buffer based on map(page 1)
+    // Draws the first display buffer based on streaming data
     VDP_SetPage(1);
-    for(u16 l = 0; l < 16; l++)
+    /*for(u16 l = 0; l < 16; l++)
         for(u16 c = 0; c < 16; c++){
             VDP_CommandHMMM((map[(l+mapLine)*16+c]%16)*16,(map[(l+mapLine)*16+c]/16)*16+TILE_OFFY,
                             c*16,l*16+256,
@@ -513,12 +523,42 @@ void main()
     --mapLine;
     offsetScroll-=16;
     // Draw a palette view on page 0
+    */
 
     // Load hardware sprites
 /*   DEBUG_PRINT("Sprite attribute table: %X, %X\n", g_SpriteAttributeLow, g_SpriteAttributeHigh);
     DEBUG_PRINT("Sprite pattern table: %X, %X\n",g_SpritePatternLow, g_SpritePatternHigh);
     DEBUG_PRINT("Sprite color table: %X, %X\n", g_SpriteColorLow, g_SpriteColorHigh);
     DEBUG_PRINT("VDP Sprite variable: %X\n", sizeof(g_VDP_Sprite));*/
+    packedSegment = FASE_PACKED_SEG;
+    SET_BANK_SEGMENT(3, packedSegment);
+    packedStream=(u8*)(0xA000);
+    offset=191;
+    for(u8 l=0;l<192;l++){
+        packedSize=*packedStream;
+        // Are we at the end of the 8k block?
+        if(packedSize==255){
+            ++packedSegment;
+            SET_BANK_SEGMENT(3, packedSegment);
+            packedStream=(u8*)(0xA000);
+            packedSize=*packedStream;
+        }
+        // Are we at the end of the map (elapses in this case)
+        else if(packedSize==0){
+            packedSegment=FASE_PACKED_SEG;
+            SET_BANK_SEGMENT(3, packedSegment);
+            packedStream=(u8*)(0xA000);
+            packedSize=*packedStream;
+        }
+        // Move one byte ahead
+        ++packedStream;
+        // Decompresses the data
+        LZ48_UnpackToRAM(packedStream, stream);
+        // Skips the packed data to the next pack size
+        packedStream+=packedSize;
+        VDP_CommandHMMC(stream,0, 256+offset, 256, 1);
+        --offset;
+    }
 
 
     Mem_Set(0, noflick, sizeof(Character)*MAX_NOFLICK);
@@ -617,9 +657,9 @@ void main()
 	bool bContinue = TRUE;
 	offset=0;
 	String_Format(buffer, "SP: %02d(%02d,%02d)", numSprites, numNoFlick, numShoots);
-	drawText(buffer,0,1);
+	drawText(buffer,0,0);
 	String_Format(buffer, "FPS: --/%02d", delays[dmode][2]);
-	drawText(buffer,128,1);
+	drawText(buffer,128,0);
 
 	// Decode VGM header
 	g_CurrentMusic=0;
@@ -631,18 +671,19 @@ void main()
 //	Bios_SetHookCallback(H_KEYI, InterruptHook);
 	VDP_EnableVBlank(TRUE);
 //	Bios_SetHookCallback(H_TIMI, VDP_InterruptHandler);
-	drawText("LINE 2",8,11);
+	drawText("LINE 2",8,9);
 
     VDP_SetColor(0);
 	while(bContinue)
 	{
 
         WaitVBlank();
+        //VDP_CommandHMMC(stream,0, 255+offset, 256, 1);
         if(vblanks>=60){
             vblanks=0;
             String_Format(buffer, "FPS: %02d/%02d", g_Frame, delays[dmode][2]);
             g_Frame=0;
-            drawText(buffer,128,1);
+            drawText(buffer,128,0);
         }
         row8 = Keyboard_Read(8);
 		if(IS_KEY_PRESSED(row8, KEY_UP) && !IS_KEY_PRESSED(prevRow8, KEY_UP)){
@@ -658,7 +699,7 @@ void main()
                     numShoots=numSprites-MAX_NOFLICK;
                 }
                 String_Format(buffer, "SP: %02d(%02d,%02d)", numSprites, numNoFlick, numShoots);
-                drawText(buffer,0,1);
+                drawText(buffer,0,0);
             }
             SoundPlay(0);
             //soundPlay=TRUE;
@@ -676,7 +717,7 @@ void main()
                     numShoots=numSprites-MAX_NOFLICK;
                 }
                 String_Format(buffer, "SP: %02d(%02d,%02d)", numSprites, numNoFlick, numShoots);
-                drawText(buffer,0,1);
+                drawText(buffer,0,0);
             }
             SoundPlay(1);
             //soundPlay=TRUE;
@@ -686,7 +727,7 @@ void main()
             if(dmode<0)
                 dmode=0;
             String_Format(buffer, "FPS: --/%02d", delays[dmode][2]);
-            drawText(buffer,128,1);
+            drawText(buffer,128,0);
             vblanks=0;
             g_Frame=0;
             SoundPlay(2);
@@ -696,7 +737,7 @@ void main()
             if(dmode>=6)
                 dmode=5;
             String_Format(buffer, "FPS: --/%02d", delays[dmode][2]);
-            drawText(buffer,128,1);
+            drawText(buffer,128,0);
             vblanks=0;
             g_Frame=0;
             SoundPlay(3);
@@ -813,7 +854,7 @@ void main()
         }
         // Ensures the interrupt has swapped the sprites tables in VRAM
         // Updates the map position
-        VDP_CommandHMMM((map[mapLine*16+scrollCount]%16)*16,(map[mapLine*16+scrollCount]/16)*16+TILE_OFFY,
+        /*VDP_CommandHMMM((map[mapLine*16+scrollCount]%16)*16,(map[mapLine*16+scrollCount]/16)*16+TILE_OFFY,
                                 scrollCount*16,offsetScroll+256,
                                 16,16);
         //Prepares for the next line in the map
@@ -821,7 +862,7 @@ void main()
             mapLine=(--mapLine)%mapHeight;
             offsetScroll-=16;
             scrollCount=0;
-        }
+        }*/
         while(swapSprites){}
         // Writes the sprites RAM copy to the VRAM
         VDP_WriteVRAM((u8*)&tableSprites[0].attributes, spriteAttributeLow[spriteAttributeLowBack], 0, 128);
@@ -837,7 +878,34 @@ void main()
         prevRow8=row8;
         // Scrolls the screen
         offset--;
-        //DEBUG_PRINT("Frames, vblanks: %d %d", g_Frame, vblanks);*/
+        SET_BANK_SEGMENT(3, packedSegment);
+        packedSize=*packedStream;
+        // Are we at the end of the 8k block?
+        if(packedSize==255){
+            ++packedSegment;
+            SET_BANK_SEGMENT(3, packedSegment);
+            packedStream=(u8*)(0xA000);
+            packedSize=*packedStream;
+        }
+        // Are we at the end of the map (elapses in this case)
+        else if(packedSize==0){
+            packedSegment=FASE_PACKED_SEG;
+            SET_BANK_SEGMENT(3, packedSegment);
+            packedStream=(u8*)(0xA000);
+            packedSize=*packedStream;
+        }
+        // Move one byte ahead
+        ++packedStream;
+        // Decompresses the data
+        LZ48_UnpackToRAM(packedStream, stream);
+        packedCopy=255;
+        // Skips the packed data to the next pack size
+        packedStream+=packedSize;
+        //packedScrollLine=offset-1;
+        packedVRAMAddress = ((u16)offset)<<8;
+        VDP_WriteVRAM(stream, packedVRAMAddress, 1, 256);
+
+        //DEBUG_PRINT("Frames, vblanks: %d %d", g_Frame, vblanks);
 	}
 
 	//DEBUG_LOG("End debug session!");

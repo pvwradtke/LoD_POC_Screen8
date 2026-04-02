@@ -522,7 +522,7 @@
 // - LZ48_MODE_STANDARD ........... Standard routine
 // - LZ48_MODE_SPEED .............. Version optimized for speed
 // - LZ48_MODE_SIZE ............... Version optimized for size
-#define LZ48_MODE					LZ48_MODE_STANDARD
+#define LZ48_MODE					LZ48_MODE_SPEED
 
 // MSXi compressor support
 #define MSXi_USE_COMP_NONE			TRUE

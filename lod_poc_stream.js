@@ -8,7 +8,7 @@ Target = "ROM_ASCII8";
 
 
 //-- ROM mapper total size in KB (number). Must be a multiple of 8 or 16 depending on the mapper type (from 64 to 4096)
-ROMSize = 128;
+ROMSize = 256;
 
 //-- Number of segments in the main program of a mapped-ROM (number)
 ROMMainSegments = 2;
@@ -17,7 +17,7 @@ ROMMainSegments = 2;
 AppID = "LD";
 
 //-- List of library modules to build (array)
-LibModules = ["scc", "msx-audio", "psg", "msx-music", "vgm/lvgm_player", "ayfx/ayfx_player","system", "bios", "vdp", "input", "memory", "compress/zx0", "string" ];
+LibModules = ["scc", "msx-audio", "psg", "msx-music", "vgm/lvgm_player", "ayfx/ayfx_player","system", "bios", "vdp", "input", "memory", "compress/lz48", "string" ];
 //"pt3/pt3_player",
 //-- List of raw data files to be added to final binary (array). Each entry must be in the following format: { offset:0x0000, file:"myfile.bin" }
 // Segments 0-2: Main code (banks 2-4)
@@ -35,7 +35,7 @@ RawFiles = [
     //{ segment: 6, file:"content/lvgm/laydock2.lvm"},
     //{ segment: 6, file:"content/lvgm/mm_psycho_03.lvm" },
     //{ segment: 6, file:"content/vgm/mm_undeadline_03.vgm" },
-
+    { segment: 13, file:"tileset/fase1pixel/fase_packed"},
 ];
 
 //-- Add SCC extension (boolean)
