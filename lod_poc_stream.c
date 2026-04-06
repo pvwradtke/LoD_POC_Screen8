@@ -530,7 +530,7 @@ void main()
     DEBUG_PRINT("Sprite pattern table: %X, %X\n",g_SpritePatternLow, g_SpritePatternHigh);
     DEBUG_PRINT("Sprite color table: %X, %X\n", g_SpriteColorLow, g_SpriteColorHigh);
     DEBUG_PRINT("VDP Sprite variable: %X\n", sizeof(g_VDP_Sprite));*/
-    packedSegment = FASE_PACKED_SEG;
+    packedSegment = FASECAVEIRA_PACKED_SEG;
     SET_BANK_SEGMENT(3, packedSegment);
     packedStream=(u8*)(0xA000);
     offset=191;
@@ -545,7 +545,7 @@ void main()
         }
         // Are we at the end of the map (elapses in this case)
         else if(packedSize==0){
-            packedSegment=FASE_PACKED_SEG;
+            packedSegment=FASECAVEIRA_PACKED_SEG;
             SET_BANK_SEGMENT(3, packedSegment);
             packedStream=(u8*)(0xA000);
             packedSize=*packedStream;
@@ -889,7 +889,7 @@ void main()
         }
         // Are we at the end of the map (elapses in this case)
         else if(packedSize==0){
-            packedSegment=FASE_PACKED_SEG;
+            packedSegment=FASECAVEIRA_PACKED_SEG;
             SET_BANK_SEGMENT(3, packedSegment);
             packedStream=(u8*)(0xA000);
             packedSize=*packedStream;

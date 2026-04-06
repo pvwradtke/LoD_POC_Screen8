@@ -1,0 +1,9 @@
+./pack.sh original RGBNDIST
+./pack.sh brightness RGBNDIST
+./pack.sh curve DIVISION
+./pack.sh pablo DIVISION
+./pack.sh no_dither DIVISION
+./pack.sh diffusion_dither DIVISION
+./pack.sh noise_dither DIVISION
+./pack.sh noise_dither DIVISION
+./pack.sh pattern_dither DIVISION

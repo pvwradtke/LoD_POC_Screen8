@@ -8,7 +8,7 @@ Target = "ROM_ASCII8";
 
 
 //-- ROM mapper total size in KB (number). Must be a multiple of 8 or 16 depending on the mapper type (from 64 to 4096)
-ROMSize = 256;
+ROMSize = 512;
 
 //-- Number of segments in the main program of a mapped-ROM (number)
 ROMMainSegments = 2;
@@ -35,7 +35,7 @@ RawFiles = [
     //{ segment: 6, file:"content/lvgm/laydock2.lvm"},
     //{ segment: 6, file:"content/lvgm/mm_psycho_03.lvm" },
     //{ segment: 6, file:"content/vgm/mm_undeadline_03.vgm" },
-    { segment: 13, file:"tileset/fase1pixel/fase_packed"},
+    { segment: 13, file:"tileset/testecaveira/fasecaveira_packed"},
 ];
 
 //-- Add SCC extension (boolean)
