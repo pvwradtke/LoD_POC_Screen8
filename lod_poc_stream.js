@@ -17,7 +17,7 @@ ROMMainSegments = 2;
 AppID = "LD";
 
 //-- List of library modules to build (array)
-LibModules = ["scc", "msx-audio", "psg", "msx-music", "vgm/lvgm_player", "ayfx/ayfx_player","system", "bios", "vdp", "input", "memory", "compress/lz48", "string" ];
+LibModules = ["scc", "psg", "msx-music", "vgm/lvgm_player", "ayfx/ayfx_player","system", "bios", "vdp", "input", "memory", "compress/lz48", "string" ]; //"msx-audio", 
 //"pt3/pt3_player",
 //-- List of raw data files to be added to final binary (array). Each entry must be in the following format: { offset:0x0000, file:"myfile.bin" }
 // Segments 0-2: Main code (banks 2-4)

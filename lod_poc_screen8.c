@@ -10,7 +10,7 @@
 #include "compress/zx0.h"
 #include "vgm/lvgm_player.h"
 #include "psg.h"
-#if (VGM_USE_SCC)
+/*#if (VGM_USE_SCC)
 #include "scc.h"
 #endif
 #if (VGM_USE_MSXMUSIC)
@@ -18,7 +18,7 @@
 #endif
 #if (VGM_USE_MSXAUDIO)
 #include "msx-audio.h"
-#endif
+#endif*/
 
 #include "ayfx/ayfx_player.h"
 
@@ -599,15 +599,15 @@ void main()
 
 	// Initialize audio chip
 	LVGM_SetNotifyCallback(MusicNotification);
-	#if (LVGM_USE_SCC)
-	SCC_Initialize();
+	/*#if (LVGM_USE_SCC)
+	//SCC_Initialize();
 	#endif
 	#if (LVGM_USE_MSXMUSIC)
-	MSXMusic_Initialize();
+	//MSXMusic_Initialize();
 	#endif
 	#if (LVGM_USE_MSXAUDIO)
-	MSXAudio_Initialize();
-	#endif
+	//MSXAudio_Initialize();
+	#endif*/
     //PT3_Init();
 	ayFX_InitBank(g_ayfx_bank);
 	ayFX_SetChannel(PSG_CHANNEL_C);

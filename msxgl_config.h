@@ -417,7 +417,7 @@
 
 // VGM supported chip
 #define VGM_USE_PSG					TRUE	// Allow PSG data parsing and audio output
-#define VGM_USE_MSXMUSIC			TRUE	// Allow MSX-Music data parsing and audio output
+#define VGM_USE_MSXMUSIC			FALSE	// Allow MSX-Music data parsing and audio output
 #define VGM_USE_MSXAUDIO			FALSE	// Allow MSX-Audio data parsing and audio output
 #define VGM_USE_SCC					FALSE	// Allow SCC data parsing and audio output
 
@@ -448,8 +448,8 @@
 // LVGM replayer options
 #define LVGM_USE_PSG				TRUE	// Add parser for PSG data
 #define LVGM_USE_MSXMUSIC			TRUE	// Add parser for MSX-Music data
-#define LVGM_USE_MSXAUDIO			TRUE	// Add parser for MSX-Audio data
-#define LVGM_USE_SCC				TRUE	// Add parser for Konami SCC data
+#define LVGM_USE_MSXAUDIO			FALSE	// Add parser for MSX-Audio data
+#define LVGM_USE_SCC				FALSE	// Add parser for Konami SCC data
 #define LVGM_USE_SCCI				FALSE	// Add parser for Konami SCC+ data
 #define LVGM_USE_PSG2				FALSE	// Add parser for secondary PSG data
 #define LVGM_USE_OPL4				FALSE	// Add parser for OPL4 data

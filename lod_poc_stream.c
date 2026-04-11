@@ -10,15 +10,11 @@
 #include "compress/lz48.h"
 #include "vgm/lvgm_player.h"
 #include "psg.h"
-#if (VGM_USE_SCC)
-#include "scc.h"
-#endif
-#if (VGM_USE_MSXMUSIC)
+
+#if (LVGM_USE_MSXMUSIC)
 #include "msx-music.h"
 #endif
-#if (VGM_USE_MSXAUDIO)
-#include "msx-audio.h"
-#endif
+
 
 #include "ayfx/ayfx_player.h"
 
@@ -324,6 +320,14 @@ void VDP_InterruptHandler()
     VDP_SetHBlankLine(SPLIT_SCORE);
     VDP_DisableSprite();
     hphase=0;
+        ++vblanks;
+        ++dframe;        
+        if(dframe>delays[dmode][cdindex]){
+            g_VBlank = 1;
+            dframe=0;
+            cdindex=(cdindex+1)%2;
+        }
+
 }
 
 void VDP_HBlankHandler()
@@ -362,13 +366,13 @@ void VDP_HBlankHandler()
         SET_BANK_SEGMENT(3, packedSegment);
     }else if(hphase==1){
         hphase=2;
-        ++vblanks;
+/*        ++vblanks;
         ++dframe;        
         if(dframe>delays[dmode][cdindex]){
             g_VBlank = 1;
             dframe=0;
             cdindex=(cdindex+1)%2;
-        }
+        }*/
     }
 }
 
@@ -505,7 +509,7 @@ void main()
     VDP_EnableSprite(TRUE);
     VDP_LoadSpritePattern(nave,0, 96);
     // Draws the first display buffer based on streaming data
-    VDP_SetPage(1);
+    //VDP_SetPage(1);
     /*for(u16 l = 0; l < 16; l++)
         for(u16 c = 0; c < 16; c++){
             VDP_CommandHMMM((map[(l+mapLine)*16+c]%16)*16,(map[(l+mapLine)*16+c]/16)*16+TILE_OFFY,
@@ -530,6 +534,10 @@ void main()
     DEBUG_PRINT("Sprite pattern table: %X, %X\n",g_SpritePatternLow, g_SpritePatternHigh);
     DEBUG_PRINT("Sprite color table: %X, %X\n", g_SpriteColorLow, g_SpriteColorHigh);
     DEBUG_PRINT("VDP Sprite variable: %X\n", sizeof(g_VDP_Sprite));*/
+    u8 cartSlot = Sys_GetPageSlot(0); // Backup page 0 slot (cartridge)
+    drawText("LOADING FIRST PAGE          ",0,0);
+    String_Format(buffer, "Page 0 at slot: %02d", cartSlot);
+    drawText(buffer,0,8);
     packedSegment = FASECAVEIRA_PACKED_SEG;
     SET_BANK_SEGMENT(3, packedSegment);
     packedStream=(u8*)(0xA000);
@@ -559,8 +567,10 @@ void main()
         VDP_CommandHMMC(stream,0, 256+offset, 256, 1);
         --offset;
     }
-
-
+    drawText("PREPARING SPRITES BUFFER          ",0,0);
+    cartSlot = Sys_GetPageSlot(0);
+    String_Format(buffer, "Page 0 at slot: %02d", cartSlot);
+    drawText(buffer,0,8);
     Mem_Set(0, noflick, sizeof(Character)*MAX_NOFLICK);
     for(utemp8=0;utemp8<MAX_NOFLICK;utemp8++){
         noflick[utemp8].frame=0;
@@ -623,6 +633,10 @@ void main()
                 }
         }
     }
+    drawText("RESET SPRITE TABLE          ",0,0);
+    cartSlot = Sys_GetPageSlot(0);
+    String_Format(buffer, "Page 0 at slot: %02d", cartSlot);
+    drawText(buffer,0,8);
     // Resets the sprite table
     Mem_Set(0, tableSprites, sizeof(SprAttrTable)*2);
     for(utemp8=0;utemp8<MAX_SP_PHYS*2;utemp8++)
@@ -636,29 +650,53 @@ void main()
 
     for(utemp8=0;utemp8<4;++utemp8)
         VDP_WriteVRAM((u8*)&tableSprites[0], spriteColorsLow[utemp8], 0, 640);
+    drawText("INIT LVGM          ",0,0);
+    cartSlot = Sys_GetPageSlot(0);
+    String_Format(buffer, "PAGE 0 AT SLOT: %02d", cartSlot);
+    drawText(buffer,0,8);
 
 	// Initialize audio chip
 	LVGM_SetNotifyCallback(MusicNotification);
-	#if (LVGM_USE_SCC)
-	SCC_Initialize();
-	#endif
-	#if (LVGM_USE_MSXMUSIC)
+    //drawText("INIT MSX MUSIC          ",0,0);
+    //#if (LVGM_USE_MSXMUSIC)
+    drawText("INIT FM          ",0,0);
+    cartSlot = Sys_GetPageSlot(0);
+    String_Format(buffer, "PAGE 0 AT SLOT: %02d", cartSlot);
+    drawText(buffer,0,8);
+
 	MSXMusic_Initialize();
-	#endif
-	#if (LVGM_USE_MSXAUDIO)
-	MSXAudio_Initialize();
-	#endif
+	//#endif
+    drawText("INIT AYFX BANK          ",0,0);
+    cartSlot = Sys_GetPageSlot(0);
+    String_Format(buffer, "PAGE 0 AT SLOT: %02d", cartSlot);
+    drawText(buffer,0,8);
+
+    cartSlot = Sys_GetPageSlot(0);
+    String_Format(buffer, "PAGE 0 AT SLOT: %02d", cartSlot);
+    drawText(buffer,0,8);
+
     //PT3_Init();
 	ayFX_InitBank(g_ayfx_bank);
 	ayFX_SetChannel(PSG_CHANNEL_C);
-	ayFX_SetMode(AYFX_MODE_FIXED);
-	//ayFX_SetFinishCB(soundEnd);
+    drawText("INIT AYFX MODE          ",0,0);
+    cartSlot = Sys_GetPageSlot(0);
+    String_Format(buffer, "PAGE 0 AT SLOT: %02d", cartSlot);
+    drawText(buffer,0,8);
 
-	bool bContinue = TRUE;
+    ayFX_SetMode(AYFX_MODE_FIXED);
+
+    //ayFX_SetFinishCB(soundEnd);
+
+    drawText("END INIT          ",0,0);
+    cartSlot = Sys_GetPageSlot(0);
+    String_Format(buffer, "PAGE 0 AT SLOT: %02d", cartSlot);
+    drawText(buffer,0,8);
+
+    bool bContinue = TRUE;
 	offset=0;
-	String_Format(buffer, "SP: %02d(%02d,%02d)", numSprites, numNoFlick, numShoots);
+	String_Format(buffer, "SP: %02d(%02d,%02d)        ", numSprites, numNoFlick, numShoots);
 	drawText(buffer,0,0);
-	String_Format(buffer, "FPS: --/%02d", delays[dmode][2]);
+	String_Format(buffer, "FPS: --/%02d          ", delays[dmode][2]);
 	drawText(buffer,128,0);
 
 	// Decode VGM header
@@ -666,11 +704,12 @@ void main()
 	SetMusic(g_CurrentMusic);
 
 	Bios_SetKeyClick(FALSE);
-	VDP_EnableHBlank(TRUE);
-	VDP_SetHBlankLine(SPLIT_SCORE);
+
 //	Bios_SetHookCallback(H_KEYI, InterruptHook);
 	VDP_EnableVBlank(TRUE);
-//	Bios_SetHookCallback(H_TIMI, VDP_InterruptHandler);
+	VDP_EnableHBlank(TRUE);
+	VDP_SetHBlankLine(SPLIT_SCORE);
+    //	Bios_SetHookCallback(H_TIMI, VDP_InterruptHandler);
 	drawText("LINE 2",8,9);
 
     VDP_SetColor(0);
